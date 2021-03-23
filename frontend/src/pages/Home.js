@@ -1,15 +1,15 @@
 import "./Home.scss";
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
-const Width = 640;
-const Height = 480
-
 let lastMousePos = null;
 const Sq3 = Math.sqrt(3.0) / 2;
 const DxA = Sq3 * 2;
 const DyA = 0;
 const DxB = Sq3;
 const DyB = 1.5;
+
+const InitialZoom = 1 / 30;
+const MinZoom = 1 / 256;
 
 
 function drawHex(ctx, cx, cy, side, color) {
@@ -31,18 +31,20 @@ function HomePage(props) {
   const [view, setView] = useState({
     a: 0,
     b: 0,
-    zoom: 32,
+    zoom: InitialZoom,
+    aspect: 1,
   });
   const [mouseAb, setMouseAb] = useState({a: 0, b: 0});
 
   const refresh = useCallback(() => {
-    let width = Width;
-    let height = Height;
-    let maxA = width / view.zoom / DxA;
-    let maxB = height / view.zoom / DyB;
+    let width = 1;
+    let height = view.aspect;
+    const zoom = view.zoom;
+    let maxA = width / zoom / DxA;
+    let maxB = height / zoom / DyB;
 
-    const db = height / view.zoom / DyB / 2;
-    const da = (width / view.zoom / 2 - db * DxB) / DxA;
+    const db = height / zoom / DyB / 2;
+    const da = (width / zoom / 2 - db * DxB) / DxA;
 
     const oa = view.a - da;
     const ob = view.b - db;
@@ -53,30 +55,29 @@ function HomePage(props) {
     let b2 = Math.floor(ob + maxB + 1);
 
     ctx.clearRect(0, 0, width, height);
-    ctx.font = `${view.zoom / 3}px serif`;
+    ctx.font = `${zoom / 3}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (let b = b1; b <= b2; ++b) {
       for (let ia = a1; ia <= a2; ++ia) {
         const a = ia - Math.floor((b - b1) / 2);
-        const cy = ((b - ob) * DyB + (a - oa) * DyA) * view.zoom;
-        const cx = ((b - ob) * DxB + (a - oa) * DxA) * view.zoom;
+        const cy = ((b - ob) * DyB + (a - oa) * DyA) * zoom;
+        const cx = ((b - ob) * DxB + (a - oa) * DxA) * zoom;
         drawHex(
           ctx,
           cx,
           cy,
-          view.zoom,
+          zoom,
           `rgb(${((a * 16 % 256) + 256) % 256}, ${((b * 16 % 256) + 256) % 256},${(((a + 13 + b * 17) % 256) + 256) % 256})`
         );
-        // ctx.fillRect((j - offsetLeft) * view.zoom, (i - offsetTop) * view.zoom,  view.zoom,  view.zoom);
-        ctx.fillStyle = 'white';
-        ctx.fillText(`${a}, ${b}`, cx, cy);
+        // ctx.fillStyle = 'white';
+        // ctx.fillText(`${a}, ${b}`, cx, cy);
       }
     }
 
     if (mouseAb) {
-      let a = view.a + mouseAb.a / view.zoom;
-      let b = view.b + mouseAb.b / view.zoom;
+      let a = view.a + mouseAb.a / zoom;
+      let b = view.b + mouseAb.b / zoom;
 
       function dist(na, nb) {
         const cy = ((nb - b) * DyB + (na - a) * DyA);
@@ -104,13 +105,13 @@ function HomePage(props) {
       a = best.a;
       b = best.b;
 
-      const cy = ((b - ob) * DyB + (a - oa) * DyA) * view.zoom;
-      const cx = ((b - ob) * DxB + (a - oa) * DxA) * view.zoom;
+      const cy = ((b - ob) * DyB + (a - oa) * DyA) * zoom;
+      const cx = ((b - ob) * DxB + (a - oa) * DxA) * zoom;
       drawHex(
         ctx,
         cx,
         cy,
-        view.zoom,
+        zoom,
         'rgba(0, 0, 0, 0.25)'
       );
     }
@@ -131,16 +132,16 @@ function HomePage(props) {
         const x = e.clientX;
         const y = e.clientY;
         const rect = e.target.getBoundingClientRect();
-        const dx = ((e.clientX - rect.x) / rect.width - 0.5) * Width;
-        const dy = ((e.clientY - rect.y) / rect.height - 0.5) * Height;
+        const dx = ((e.clientX - rect.x) / rect.width - 0.5);
+        const dy = ((e.clientY - rect.y) / rect.width - rect.height / rect.width * 0.5);
         const b = dy / DyB;
         const a = (dx - b * DxB) / DxA;
         setMouseAb({
           a, b
         })
         if (lastMousePos) {
-          const dx = (x - lastMousePos.x) / rect.width * Width;
-          const dy = (y - lastMousePos.y) / rect.height * Height;
+          const dx = (x - lastMousePos.x) / rect.width;
+          const dy = (y - lastMousePos.y) / rect.width;
           const db = dy / DyB;
           const da = (dx - db * DxB) / DxA;
           setView((view) => {
@@ -148,6 +149,7 @@ function HomePage(props) {
               a: view.a - da / view.zoom,
               b: view.b - db / view.zoom,
               zoom: view.zoom,
+              aspect: view.aspect,
             }
           })
         }
@@ -161,12 +163,12 @@ function HomePage(props) {
       canvasEl.current.addEventListener('wheel', (e) => {
         e.preventDefault();
         const rect = e.target.getBoundingClientRect();
-        const dx = ((e.clientX - rect.x) / rect.width - 0.5) * Width;
-        const dy = ((e.clientY - rect.y) / rect.height - 0.5) * Height;
+        const dx = ((e.clientX - rect.x) / rect.width - 0.5);
+        const dy = ((e.clientY - rect.y) / rect.width - rect.height / rect.width * 0.5);
         const mb = dy / DyB;
         const ma = (dx - mb * DxB) / DxA;
         setView((view) => {
-          const newZoom = Math.max(8, view.zoom - e.deltaY * 0.1);
+          const newZoom = Math.max(MinZoom, view.zoom * Math.exp(-e.deltaY * 0.001));
           const oa = view.a + ma / view.zoom;
           const ob = view.b + mb / view.zoom;
           const va = oa - ma / newZoom;
@@ -176,6 +178,7 @@ function HomePage(props) {
             a: va,
             b: vb,
             zoom: newZoom,
+            aspect: view.aspect,
           }
         })
       });
@@ -189,11 +192,14 @@ function HomePage(props) {
           ctx.backingStorePixelRatio || 1;
 
         const pixelRatio = dpr / bsr;
-        const rect = canvasEl.current.getBoundingClientRect();
-        canvasEl.current.width  = rect.width * pixelRatio;
-        canvasEl.current.height = rect.height * pixelRatio;
-        ctx.scale(canvasEl.current.width / Width, canvasEl.current.height / Height);
-        setView((v) => Object.assign({}, v));
+        const width  = window.innerWidth || document.documentElement.clientWidth ||
+          document.body.clientWidth;
+        const height = window.innerHeight|| document.documentElement.clientHeight||
+          document.body.clientHeight;
+        canvasEl.current.width = width * pixelRatio;
+        canvasEl.current.height = height * pixelRatio;
+        ctx.scale(canvasEl.current.width, canvasEl.current.width);
+        setView((v) => Object.assign({}, v, {aspect: height / width}));
       };
 
       window.addEventListener('resize', resize);
@@ -205,19 +211,11 @@ function HomePage(props) {
 
   return (
     <div>
-      <div className="container">
-        <div className="row justify-content-md-center mb-3">
-          <div>
-            {view.a} {view.b} {view.zoom}
-          </div>
-          <canvas
-            ref={canvasEl}
-            className="canvas"
-            width={640}
-            height={480}
-          />
-        </div>
-      </div>
+      <canvas
+        ref={canvasEl}
+        className="canvas"
+        width={640}
+      />
     </div>
   );
 }
