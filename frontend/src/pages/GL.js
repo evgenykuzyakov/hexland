@@ -3,6 +3,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import * as twgl from 'twgl-base.js';
 import vs from '../shaders/vs';
 import fs from '../shaders/fs';
+import Tst from '../images/tst.png';
 
 let lastMousePos = null;
 const Sq3 = Math.sqrt(3.0) / 2;
@@ -36,33 +37,29 @@ function setupRender(gl) {
   const programInfo = twgl.createProgramInfo(gl, [vs, fs])
 
   const arrays = {
-    position: [
-      0, 0, 0,
-      0, -1, 0,
-      -Sq3, -0.5, 0,
-
-      0, 0, 0,
-      -Sq3, -0.5, 0,
-      -Sq3, 0.5, 0,
-
-      0, 0, 0,
-      -Sq3, 0.5, 0,
-      0, 1, 0,
-
-      0, 0, 0,
-      0, 1, 0,
-      Sq3, 0.5, 0,
-
-      0, 0, 0,
-      Sq3, 0.5, 0,
-      Sq3, -0.5, 0,
-
-      0, 0, 0,
-      Sq3, -0.5, 0,
-      0, -1, 0,
-    ]
+    a_position: [
+      -Sq3, 0.75, 0,
+      Sq3, 0.75, 0,
+      0, -0.75, 0,
+    ],
+    a_texcoord: [
+      0, 0,
+      1, 0,
+      0, 1,
+    ],
+    a_ab: {
+      numComponents: 2, data: [
+        -0.5, -0.5,
+        49.5, -0.5,
+        -0.5, 49.5,
+      ]
+    }
   };
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
+
+  const textures = twgl.createTextures(gl, {
+    test: { src: Tst, mag: gl.NEAREST, min: gl.NEAREST },
+  });
 
   function render(time) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
@@ -72,16 +69,12 @@ function setupRender(gl) {
       resolution: [gl.canvas.width, gl.canvas.height],
       zoom: state.zoom,
       offset: [state.oa, state.ob],
+      u_diffuse: textures.test,
     };
     gl.useProgram(programInfo.program);
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-    state.hexes.forEach(({a, b, color}) => {
-      uniforms.color = color;
-      uniforms.pos = [a, b];
-
-      twgl.setUniforms(programInfo, uniforms);
-      twgl.drawBufferInfo(gl, bufferInfo);
-    })
+    twgl.setUniforms(programInfo, uniforms);
+    twgl.drawBufferInfo(gl, bufferInfo);
 
     requestAnimationFrame(render);
   }
