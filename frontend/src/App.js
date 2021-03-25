@@ -8,6 +8,7 @@ import * as nearAPI from 'near-api-js'
 import HomePage from "./pages/Home";
 import {HashRouter as Router, Link, Route, Switch} from 'react-router-dom'
 import ls from "local-storage";
+import GlPage from "./pages/GL";
 
 const IsMainnet = window.location.hostname === "berry.cards";
 const TestNearConfig = {
@@ -156,7 +157,7 @@ class App extends React.Component {
         <a className="github-fork-ribbon right-bottom fixed" href="https://github.com/evgenykuzyakov/hexland" data-ribbon="Fork me on GitHub"
            title="Fork me on GitHub">Fork me on GitHub</a>
 
-        <HomePage {...passProps}/>
+        <GlPage {...passProps}/>
       </div>
     )
   }
