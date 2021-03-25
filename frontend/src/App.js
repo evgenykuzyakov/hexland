@@ -153,7 +153,7 @@ class App extends React.Component {
 
     return (
       <div className="App">
-        <a className="github-fork-ribbon right-bottom fixed" href="https://github.com/evgenykuzyakov/berry-hot" data-ribbon="Fork me on GitHub"
+        <a className="github-fork-ribbon right-bottom fixed" href="https://github.com/evgenykuzyakov/hexland" data-ribbon="Fork me on GitHub"
            title="Fork me on GitHub">Fork me on GitHub</a>
 
         <HomePage {...passProps}/>
