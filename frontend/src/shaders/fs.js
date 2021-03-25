@@ -6,6 +6,7 @@ const mat2 D = mat2(Sq3 * 2.0, Sq3, 0.0, -1.5);
 
 uniform vec3 color;
 uniform sampler2D u_diffuse;
+uniform vec2 texSize;
 
 varying vec2 v_texCoord;
 varying vec2 v_ab;
@@ -34,7 +35,7 @@ void main() {
   // best = mind(best, fab + vec2(-1.0, -1.0));
   
   
-  vec4 diffuseColor = texture2D(u_diffuse, best.xy / 49.0);
+  vec4 diffuseColor = texture2D(u_diffuse, best.xy / texSize);
   gl_FragColor = diffuseColor;
 }
 `;

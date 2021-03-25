@@ -4,6 +4,16 @@ import * as twgl from 'twgl-base.js';
 import vs from '../shaders/vs';
 import fs from '../shaders/fs';
 import Tst from '../images/tst.png';
+import img1 from '../images/25000000.png';
+import img2 from '../images/25100000.png';
+import img3 from '../images/25200000.png';
+import img4 from '../images/25300000.png';
+import img5 from '../images/25400000.png';
+import img6 from '../images/25500000.png';
+import img7 from '../images/25600000.png';
+import img8 from '../images/25700000.png';
+import img9 from '../images/25800000.png';
+import imgA from '../images/25900000.png';
 
 let lastMousePos = null;
 const Sq3 = Math.sqrt(3.0) / 2;
@@ -12,7 +22,7 @@ const DyA = 0;
 const DxB = Sq3;
 const DyB = 1.5;
 
-const InitialZoom = 1 / 30;
+const InitialZoom = 1;
 const MinZoom = 1 / 256;
 
 
@@ -30,7 +40,7 @@ function drawHex(ctx, cx, cy, side, color) {
 }
 
 const state = {
-  hexes: [],
+  pos: [0, 0, 1],
 };
 
 function setupRender(gl) {
@@ -38,7 +48,7 @@ function setupRender(gl) {
 
   const arrays = {
     a_position: [
-      -Sq3, 0.75, 0,
+      - Sq3, 0.75, 0,
       Sq3, 0.75, 0,
       0, -0.75, 0,
     ],
@@ -50,26 +60,56 @@ function setupRender(gl) {
     a_ab: {
       numComponents: 2, data: [
         -0.5, -0.5,
-        49.5, -0.5,
-        -0.5, 49.5,
+        255.5, -0.5,
+        -0.5, 255.5,
       ]
     }
   };
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 256, 256);
+  ctx.fillStyle = 'red';
+  ctx.fillRect(0, 0, 256, 256);
+
   const textures = twgl.createTextures(gl, {
-    test: { src: Tst, mag: gl.NEAREST, min: gl.NEAREST },
+    fromCanvas: { src: canvas, mag: gl.NEAREST, min: gl.NEAREST, wrap: gl.CLAMP_TO_EDGE },
   });
+
+  function drawImg(url, x, y) {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      ctx.drawImage(img, x, y, 50, 50);
+      twgl.setTextureFromElement(gl, textures.fromCanvas, canvas);
+    };
+    img.src = url;
+  }
+
+  drawImg(img1, 0, 0);
+  drawImg(img2, 50, 0);
+  drawImg(img3, 100, 0);
+  drawImg(img4, 150, 0);
+  drawImg(img5, 0, 50);
+  drawImg(img6, 50, 50);
+  drawImg(img7, 100, 50);
+  drawImg(img8, 0, 100);
+  drawImg(img9, 50, 100);
+  drawImg(imgA, 0, 150);
 
   function render(time) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
+    twgl.bindFramebufferInfo(gl, null);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     const uniforms = {
       resolution: [gl.canvas.width, gl.canvas.height],
-      zoom: state.zoom,
-      offset: [state.oa, state.ob],
-      u_diffuse: textures.test,
+      texSize: [255, 255],
+      pos: state.pos,
+      u_diffuse: textures.fromCanvas,
     };
     gl.useProgram(programInfo.program);
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
@@ -105,34 +145,8 @@ function GlPage(props) {
     const oa = view.a - da;
     const ob = view.b - db;
 
-    let a1 = Math.floor(oa);
-    let a2 = Math.ceil(oa + maxA);
-    let b1 = Math.floor(ob);
-    let b2 = Math.floor(ob + maxB + 1);
-
-    const hexes = [];
-
-    for (let b = b1; b <= b2; ++b) {
-      for (let ia = a1; ia <= a2; ++ia) {
-        const a = ia - Math.floor((b - b1) / 2);
-        hexes.push({
-          a,
-          b,
-          color: [
-            (((a * 16 % 256) + 256) % 256) / 255,
-            (((b * 16 % 256) + 256) % 256) / 255,
-            (((a + 13 + b * 17) + 256) % 256) / 255,
-            ],
-        });
-        // ctx.fillStyle = 'white';
-        // ctx.fillText(`${a}, ${b}`, cx, cy);
-      }
-    }
     Object.assign(state, {
-      hexes,
-      zoom,
-      oa,
-      ob,
+      pos: [view.a, view.b, zoom]
     })
     /*
     if (mouseAb) {
