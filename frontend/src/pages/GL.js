@@ -99,20 +99,12 @@ function setupRender(berryclub, gl) {
     fromCanvas: { src: canvas, mag: gl.NEAREST, min: gl.NEAREST, wrap: gl.CLAMP_TO_EDGE },
   });
 
-  function drawImg(url, x, y) {
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.onload = () => {
-      ctx.drawImage(img, x, y, 50, 50);
-      twgl.setTextureFromElement(gl, textures.fromCanvas, canvas);
-    };
-    img.src = url;
-  }
-
   const rendering = setInterval(() => {
     viewPixelBoard(berryclub, 22000000 + Math.floor(Math.random() * 10000000))
       .then((img) => {
         ctx.putImageData(img, Math.floor(Math.random() * (TexSize - 50)), Math.floor(Math.random() * (TexSize - 50)));
+        ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+        ctx.fillRect(0, 0, 1, 1);
         twgl.setTextureFromElement(gl, textures.fromCanvas, canvas);
       })
       .catch((e) => {
@@ -123,7 +115,6 @@ function setupRender(berryclub, gl) {
   setTimeout(() => {
     clearInterval(rendering);
   }, 60 * 1000);
-
 
   function render(time) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
