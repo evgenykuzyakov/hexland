@@ -23,8 +23,9 @@ const DxB = Sq3;
 const DyB = 1.5;
 
 const InitialZoom = 1;
-const MinZoom = 1 / 256;
+const MinZoom = 1 / 64;
 
+const TexSize = 1024;
 
 function drawHex(ctx, cx, cy, side, color) {
   // `rgb(${((i * 16 % 256) + 256) % 256}, ${((j * 16 % 256) + 256) % 256},${(((i + 13 + j * 17) % 256) + 256) % 256})`
@@ -48,32 +49,44 @@ function setupRender(gl) {
 
   const arrays = {
     a_position: [
-      - Sq3, 0.75, 0,
-      Sq3, 0.75, 0,
-      0, -0.75, 0,
+      -Sq3 - Sq3/2, 0.75, 0,
+      Sq3 - Sq3/2, 0.75, 0,
+      0 - Sq3/2, -0.75, 0,
+
+      Sq3 - Sq3/2, 0.75, 0,
+      Sq3 * 2 - Sq3/2, -0.75, 0,
+      0 - Sq3/2, -0.75, 0,
     ],
     a_texcoord: [
       0, 0,
       1, 0,
       0, 1,
+
+      1, 0,
+      1, 1,
+      0, 1,
     ],
     a_ab: {
       numComponents: 2, data: [
         -0.5, -0.5,
-        255.5, -0.5,
-        -0.5, 255.5,
+        TexSize - 0.5, -0.5,
+        -0.5, TexSize - 0.5,
+
+        TexSize - 0.5, -0.5,
+        TexSize - 0.5, TexSize - 0.5,
+        -0.5, TexSize - 0.5,
       ]
     }
   };
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
+  canvas.width = TexSize;
+  canvas.height = TexSize;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 256, 256);
-  ctx.fillStyle = 'red';
-  ctx.fillRect(0, 0, 256, 256);
+  ctx.clearRect(0, 0, TexSize, TexSize);
+  ctx.fillStyle = '#222222';
+  ctx.fillRect(0, 0, TexSize, TexSize);
 
   const textures = twgl.createTextures(gl, {
     fromCanvas: { src: canvas, mag: gl.NEAREST, min: gl.NEAREST, wrap: gl.CLAMP_TO_EDGE },
@@ -89,16 +102,11 @@ function setupRender(gl) {
     img.src = url;
   }
 
-  drawImg(img1, 0, 0);
-  drawImg(img2, 50, 0);
-  drawImg(img3, 100, 0);
-  drawImg(img4, 150, 0);
-  drawImg(img5, 0, 50);
-  drawImg(img6, 50, 50);
-  drawImg(img7, 100, 50);
-  drawImg(img8, 0, 100);
-  drawImg(img9, 50, 100);
-  drawImg(imgA, 0, 150);
+  const imgs = [img1, img2, img3, img4, img5, img6, img7, img8, img9, Tst];
+  setInterval(() => {
+    drawImg(imgs[Math.floor(Math.random() * imgs.length)], Math.floor(Math.random() * TexSize), Math.floor(Math.random() * TexSize));
+  }, 100);
+
 
   function render(time) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
@@ -107,7 +115,7 @@ function setupRender(gl) {
 
     const uniforms = {
       resolution: [gl.canvas.width, gl.canvas.height],
-      texSize: [255, 255],
+      texSize: [TexSize - 1, TexSize - 1],
       pos: state.pos,
       u_diffuse: textures.fromCanvas,
     };
