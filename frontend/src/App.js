@@ -1,16 +1,12 @@
 import React from 'react';
 import "error-polyfill";
-import 'bootstrap/dist/js/bootstrap.bundle';
-// import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.scss";
 import './gh-fork-ribbon.css';
 import * as nearAPI from 'near-api-js'
-import HomePage from "./pages/Home";
-import {HashRouter as Router, Link, Route, Switch} from 'react-router-dom'
 import ls from "local-storage";
 import GlPage from "./pages/GL";
 
-const IsMainnet = window.location.hostname === "berry.cards";
+const IsMainnet = true; // window.location.hostname === "berry.cards";
 const TestNearConfig = {
   networkId: 'testnet',
   nodeUrl: 'https://rpc.testnet.near.org',
@@ -58,6 +54,11 @@ class App extends React.Component {
   async _initNear() {
     const keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore();
     const near = await nearAPI.connect(Object.assign({deps: {keyStore}}, NearConfig));
+    this._near.archivalConnection = nearAPI.Connection.fromConfig({
+      networkId: NearConfig.networkId,
+      provider: { type: 'JsonRpcProvider', args: { url: NearConfig.archivalNodeUrl } },
+      signer: { type: 'InMemorySigner', keyStore }
+    });
     this._near.keyStore = keyStore;
     this._near.near = near;
 
@@ -65,6 +66,10 @@ class App extends React.Component {
     this._near.accountId = this._near.walletConnection.getAccountId();
 
     this._near.account = this._near.walletConnection.account();
+
+
+    this._near.berryclub = new nearAPI.Account(this._near.archivalConnection, 'berryclub.ek.near');
+
     this._near.contract = new nearAPI.Contract(this._near.account, NearConfig.contractName, {
       viewMethods: ['get_account', 'get_num_accounts', 'get_accounts', 'get_num_cards', 'get_top', 'get_rating', 'get_trade_data', 'get_card_info', 'get_account_cards'],
       changeMethods: ['register_account', 'vote', 'buy_card'],

@@ -27,24 +27,31 @@ const MinZoom = 1 / 64;
 
 const TexSize = 1024;
 
-function drawHex(ctx, cx, cy, side, color) {
-  // `rgb(${((i * 16 % 256) + 256) % 256}, ${((j * 16 % 256) + 256) % 256},${(((i + 13 + j * 17) % 256) + 256) % 256})`
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - side);
-  ctx.lineTo(cx - Sq3 * side, cy - side / 2);
-  ctx.lineTo(cx - Sq3 * side, cy + side / 2);
-  ctx.lineTo(cx, cy + side);
-  ctx.lineTo( cx + Sq3 * side, cy + side / 2);
-  ctx.lineTo(cx + Sq3 * side, cy - side / 2);
-  ctx.fill();
-}
-
 const state = {
   pos: [0, 0, 1],
 };
 
-function setupRender(gl) {
+async function viewPixelBoard(berryclub, blockId) {
+  const pixelsState = await berryclub.viewState('p', blockId ? { blockId } : null);
+  const imageData = new Uint8ClampedArray(50 * 50 * 4);
+  let n = 0;
+  pixelsState.forEach(({key, value}) => {
+    const linePixels = value.slice(4);
+    const width = linePixels.length;
+    for (let i = 0; i < width; i += 8) {
+      imageData[n] = linePixels[i + 2];
+      imageData[n + 1] = linePixels[i + 1];
+      imageData[n + 2] = linePixels[i];
+      imageData[n + 3] = 255;
+      n += 4;
+    }
+  });
+
+  return new ImageData(imageData, 50);
+}
+
+
+function setupRender(berryclub, gl) {
   const programInfo = twgl.createProgramInfo(gl, [vs, fs])
 
   const arrays = {
@@ -102,10 +109,20 @@ function setupRender(gl) {
     img.src = url;
   }
 
-  const imgs = [img1, img2, img3, img4, img5, img6, img7, img8, img9, Tst];
-  setInterval(() => {
-    drawImg(imgs[Math.floor(Math.random() * imgs.length)], Math.floor(Math.random() * TexSize), Math.floor(Math.random() * TexSize));
+  const rendering = setInterval(() => {
+    viewPixelBoard(berryclub, 22000000 + Math.floor(Math.random() * 10000000))
+      .then((img) => {
+        ctx.putImageData(img, Math.floor(Math.random() * (TexSize - 50)), Math.floor(Math.random() * (TexSize - 50)));
+        twgl.setTextureFromElement(gl, textures.fromCanvas, canvas);
+      })
+      .catch((e) => {
+        console.log(e);
+      })
   }, 100);
+
+  setTimeout(() => {
+    clearInterval(rendering);
+  }, 60 * 1000);
 
 
   function render(time) {
@@ -207,12 +224,14 @@ function GlPage(props) {
     }
   }, [mouseAb, view, ctx, refresh])
 
+  const berryclub = props._near.berryclub;
+
   useEffect(() => {
-    if (canvasEl.current) {
+    if (canvasEl.current && berryclub) {
       const ctx = canvasEl.current.getContext('webgl');
       setCtx(ctx);
 
-      setupRender(ctx);
+      setupRender(berryclub, ctx);
       canvasEl.current.addEventListener('mousemove', (e) => {
         const x = e.clientX;
         const y = e.clientY;
@@ -292,7 +311,7 @@ function GlPage(props) {
       resize();
 
     }
-  }, [canvasEl])
+  }, [canvasEl, berryclub])
 
   return (
     <div>
