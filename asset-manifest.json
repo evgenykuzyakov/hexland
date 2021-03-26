@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/hexland/static/css/main.c3c0136b.chunk.css",
-    "main.js": "/hexland/static/js/main.4dfd2aee.chunk.js",
-    "main.js.map": "/hexland/static/js/main.4dfd2aee.chunk.js.map",
+    "main.js": "/hexland/static/js/main.4cc6b7db.chunk.js",
+    "main.js.map": "/hexland/static/js/main.4cc6b7db.chunk.js.map",
     "runtime-main.js": "/hexland/static/js/runtime-main.02ccb323.js",
     "runtime-main.js.map": "/hexland/static/js/runtime-main.02ccb323.js.map",
     "static/js/2.1d34c270.chunk.js": "/hexland/static/js/2.1d34c270.chunk.js",
     "static/js/2.1d34c270.chunk.js.map": "/hexland/static/js/2.1d34c270.chunk.js.map",
     "index.html": "/hexland/index.html",
-    "precache-manifest.eadeeb66cc368856c9537b2d697fbce8.js": "/hexland/precache-manifest.eadeeb66cc368856c9537b2d697fbce8.js",
+    "precache-manifest.4c752a354f34fc3fdc1d76ed19d46074.js": "/hexland/precache-manifest.4c752a354f34fc3fdc1d76ed19d46074.js",
     "service-worker.js": "/hexland/service-worker.js",
     "static/css/main.c3c0136b.chunk.css.map": "/hexland/static/css/main.c3c0136b.chunk.css.map",
     "static/js/2.1d34c270.chunk.js.LICENSE.txt": "/hexland/static/js/2.1d34c270.chunk.js.LICENSE.txt",
@@ -26,6 +26,6 @@
     "static/js/runtime-main.02ccb323.js",
     "static/js/2.1d34c270.chunk.js",
     "static/css/main.c3c0136b.chunk.css",
-    "static/js/main.4dfd2aee.chunk.js"
+    "static/js/main.4cc6b7db.chunk.js"
   ]
 }

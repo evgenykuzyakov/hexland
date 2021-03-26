@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "a14fec0d01cac08aeb27e1f10e0874b3",
+    "revision": "763743fa744abbbae96a61cf291a5771",
     "url": "/hexland/index.html"
   },
   {
-    "revision": "273a4687bbc5680d2a46",
+    "revision": "404c6f7b0e1093281787",
     "url": "/hexland/static/css/main.c3c0136b.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/hexland/static/js/2.1d34c270.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "273a4687bbc5680d2a46",
-    "url": "/hexland/static/js/main.4dfd2aee.chunk.js"
+    "revision": "404c6f7b0e1093281787",
+    "url": "/hexland/static/js/main.4cc6b7db.chunk.js"
   },
   {
     "revision": "1efd37f59f8c06d8f324",
