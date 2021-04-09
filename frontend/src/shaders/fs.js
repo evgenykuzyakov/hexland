@@ -26,16 +26,13 @@ void main() {
   vec2 fab = floor(v_ab);
   vec3 best = vec3(fab, d(fab));
   best = mind(best, fab + vec2(1.0, 0.0));
-  // best = mind(best, fab + vec2(-1.0, 0.0));
   best = mind(best, fab + vec2(0.0, 1.0));
-  // best = mind(best, fab + vec2(0.0, -1.0));
-  // best = mind(best, fab + vec2(1.0, -1.0));
-  // best = mind(best, fab + vec2(-1.0, 1.0));
   best = mind(best, fab + vec2(1.0, 1.0));
-  // best = mind(best, fab + vec2(-1.0, -1.0));
-  
   
   vec4 diffuseColor = texture2D(u_diffuse, best.xy / texSize);
+  if (diffuseColor.w < 1.0) {
+    discard;
+  }
   gl_FragColor = diffuseColor;
 }
 `;

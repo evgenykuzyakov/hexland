@@ -3,17 +3,6 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import * as twgl from 'twgl-base.js';
 import vs from '../shaders/vs';
 import fs from '../shaders/fs';
-import Tst from '../images/tst.png';
-import img1 from '../images/25000000.png';
-import img2 from '../images/25100000.png';
-import img3 from '../images/25200000.png';
-import img4 from '../images/25300000.png';
-import img5 from '../images/25400000.png';
-import img6 from '../images/25500000.png';
-import img7 from '../images/25600000.png';
-import img8 from '../images/25700000.png';
-import img9 from '../images/25800000.png';
-import imgA from '../images/25900000.png';
 
 let lastMousePos = null;
 const Sq3 = Math.sqrt(3.0) / 2;
@@ -25,7 +14,7 @@ const DyB = 1.5;
 const InitialZoom = 1;
 const MinZoom = 1 / 64;
 
-const TexSize = 1024;
+const TexSize = 2048;
 
 const state = {
   pos: [0, 0, 1],
@@ -92,8 +81,8 @@ function setupRender(berryclub, gl) {
   canvas.height = TexSize;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, TexSize, TexSize);
-  ctx.fillStyle = '#222222';
-  ctx.fillRect(0, 0, TexSize, TexSize);
+  // ctx.fillStyle = '#222222';
+  // ctx.fillRect(0, 0, TexSize, TexSize);
 
   const textures = twgl.createTextures(gl, {
     fromCanvas: { src: canvas, mag: gl.NEAREST, min: gl.NEAREST, wrap: gl.CLAMP_TO_EDGE },

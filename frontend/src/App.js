@@ -6,11 +6,11 @@ import * as nearAPI from 'near-api-js'
 import ls from "local-storage";
 import GlPage from "./pages/GL";
 
-const IsMainnet = true; // window.location.hostname === "berry.cards";
+const IsMainnet = false; // window.location.hostname === "berry.cards";
 const TestNearConfig = {
   networkId: 'testnet',
   nodeUrl: 'https://rpc.testnet.near.org',
-  archivalNodeUrl: 'https://rpc.testnet.internal.near.org',
+  archivalNodeUrl: 'https://rpc.mainnet.internal.near.org', // https://rpc.testnet.internal.near.org',
   contractName: 'dev-1614796345972-8721304',
   walletUrl: 'https://wallet.testnet.near.org',
 };
