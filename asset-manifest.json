@@ -1,31 +1,22 @@
 {
   "files": {
     "main.css": "/hexland/static/css/main.c3c0136b.chunk.css",
-    "main.js": "/hexland/static/js/main.25b519bc.chunk.js",
-    "main.js.map": "/hexland/static/js/main.25b519bc.chunk.js.map",
+    "main.js": "/hexland/static/js/main.8e1ce556.chunk.js",
+    "main.js.map": "/hexland/static/js/main.8e1ce556.chunk.js.map",
     "runtime-main.js": "/hexland/static/js/runtime-main.02ccb323.js",
     "runtime-main.js.map": "/hexland/static/js/runtime-main.02ccb323.js.map",
-    "static/js/2.4de1e8a1.chunk.js": "/hexland/static/js/2.4de1e8a1.chunk.js",
-    "static/js/2.4de1e8a1.chunk.js.map": "/hexland/static/js/2.4de1e8a1.chunk.js.map",
+    "static/js/2.28543feb.chunk.js": "/hexland/static/js/2.28543feb.chunk.js",
+    "static/js/2.28543feb.chunk.js.map": "/hexland/static/js/2.28543feb.chunk.js.map",
     "index.html": "/hexland/index.html",
-    "precache-manifest.f3e05824be7f7f1ef6a59ad75d456409.js": "/hexland/precache-manifest.f3e05824be7f7f1ef6a59ad75d456409.js",
+    "precache-manifest.534df49aadf9ef3fb770b313160902b4.js": "/hexland/precache-manifest.534df49aadf9ef3fb770b313160902b4.js",
     "service-worker.js": "/hexland/service-worker.js",
     "static/css/main.c3c0136b.chunk.css.map": "/hexland/static/css/main.c3c0136b.chunk.css.map",
-    "static/js/2.4de1e8a1.chunk.js.LICENSE.txt": "/hexland/static/js/2.4de1e8a1.chunk.js.LICENSE.txt",
-    "static/media/25100000.png": "/hexland/static/media/25100000.176d6cfd.png",
-    "static/media/25200000.png": "/hexland/static/media/25200000.6bfe982d.png",
-    "static/media/25300000.png": "/hexland/static/media/25300000.a026a75f.png",
-    "static/media/25400000.png": "/hexland/static/media/25400000.13183591.png",
-    "static/media/25500000.png": "/hexland/static/media/25500000.0bc82b24.png",
-    "static/media/25600000.png": "/hexland/static/media/25600000.8777de9f.png",
-    "static/media/25700000.png": "/hexland/static/media/25700000.5f30e538.png",
-    "static/media/25800000.png": "/hexland/static/media/25800000.0460b886.png",
-    "static/media/25900000.png": "/hexland/static/media/25900000.b8fb3c48.png"
+    "static/js/2.28543feb.chunk.js.LICENSE.txt": "/hexland/static/js/2.28543feb.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.02ccb323.js",
-    "static/js/2.4de1e8a1.chunk.js",
+    "static/js/2.28543feb.chunk.js",
     "static/css/main.c3c0136b.chunk.css",
-    "static/js/main.25b519bc.chunk.js"
+    "static/js/main.8e1ce556.chunk.js"
   ]
 }
