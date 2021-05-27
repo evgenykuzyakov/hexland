@@ -20,17 +20,45 @@ const state = {
   pos: [0, 0, 1],
 };
 
+const BoardHeight = 50;
+const BoardWidth = 50;
+const ExpectedLineLength = 4 + 8 * BoardWidth;
+
+const decodeLine = (line) => {
+  let buf = Buffer.from(line, 'base64');
+  if (buf.length !== ExpectedLineLength) {
+    throw new Error("Unexpected encoded line length");
+  }
+  let pixels = []
+  for (let i = 4; i < buf.length; i += 8) {
+    let color = buf.readUInt32LE(i);
+    // let ownerIndex = buf.readUInt32LE(i + 4);
+    pixels.push(color);
+  }
+  return pixels;
+};
+
 async function viewPixelBoard(berryclub, blockId) {
-  const pixelsState = await berryclub.viewState('p', blockId ? { blockId } : null);
+  const args = {lines: [...Array(BoardHeight).keys()]};
+  const rawResult = await berryclub.connection.provider.query({
+    request_type: 'call_function',
+    block_id: blockId,
+    finality: blockId ? undefined : 'optimistic',
+    account_id: berryclub.accountId,
+    method_name: 'get_lines',
+    args_base64: Buffer.from(JSON.stringify(args), 'utf8').toString('base64'),
+  });
+  const result = rawResult.result && rawResult.result.length > 0 && JSON.parse(Buffer.from(rawResult.result).toString());
+  const lines = result.map(decodeLine);
   const imageData = new Uint8ClampedArray(50 * 50 * 4);
   let n = 0;
-  pixelsState.forEach(({key, value}) => {
-    const linePixels = value.slice(4);
-    const width = linePixels.length;
-    for (let i = 0; i < width; i += 8) {
-      imageData[n] = linePixels[i + 2];
-      imageData[n + 1] = linePixels[i + 1];
-      imageData[n + 2] = linePixels[i];
+  lines.forEach((line, i) => {
+    const width = line.length;
+    for (let i = 0; i < width; i++) {
+      const color = line[i];
+      imageData[n] = ((color >> 16) & 0xff);
+      imageData[n + 1] = ((color >> 8) & 0xff);
+      imageData[n + 2] = (color & 0xff);
       imageData[n + 3] = 255;
       n += 4;
     }
