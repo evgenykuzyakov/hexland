@@ -116,10 +116,14 @@ function setupRender(berryclub, gl) {
     fromCanvas: { src: canvas, mag: gl.NEAREST, min: gl.NEAREST, wrap: gl.CLAMP_TO_EDGE },
   });
 
+  const rnd = (w) => Math.floor(Math.random() * (TexSize - w));
+
   const rendering = setInterval(() => {
     viewPixelBoard(berryclub, 22000000 + Math.floor(Math.random() * 10000000))
       .then((img) => {
-        ctx.putImageData(img, Math.floor(Math.random() * (TexSize - 50)), Math.floor(Math.random() * (TexSize - 50)));
+        for (let i = 0; i < 10; ++i) {
+          ctx.putImageData(img, rnd(50), rnd(50));
+        }
         ctx.fillStyle = 'rgba(0, 0, 0, 0)';
         ctx.fillRect(0, 0, 1, 1);
         twgl.setTextureFromElement(gl, textures.fromCanvas, canvas);
@@ -132,6 +136,31 @@ function setupRender(berryclub, gl) {
   setTimeout(() => {
     clearInterval(rendering);
   }, 60 * 1000);
+
+  /*
+  const ww = 100;
+  const _bleeding = setInterval(() => {
+    const x = rnd(ww);
+    const y = rnd(ww);
+    const img = ctx.getImageData(x, y, ww, ww);
+    const d = img.data;
+    for (let i = 1; i < ww - 1; ++i) {
+      for (let j = 1; j < ww - 1; ++j) {
+        let outputOffset = (i * ww + j) * 4;
+        const x = j + Math.round(Math.random() * 2) - 1;
+        const y = i + Math.round(Math.random() * 2) - 1;
+        let inputOffset = (y * ww + x) * 4;
+        d[outputOffset] = d[inputOffset];
+        d[outputOffset + 1] = d[inputOffset + 1];
+        d[outputOffset + 2] = d[inputOffset + 2];
+        d[outputOffset + 3] = d[inputOffset + 3];
+      }
+    }
+    ctx.putImageData(img, x, y);
+    ctx.fillRect(0, 0, 1, 1);
+    twgl.setTextureFromElement(gl, textures.fromCanvas, canvas);
+  }, 100);
+  */
 
   function render(time) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
