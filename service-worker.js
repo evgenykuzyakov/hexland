@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/hexland/precache-manifest.534df49aadf9ef3fb770b313160902b4.js"
+  "/hexland/precache-manifest.c462ab4e6b3b2498103d226144fed05d.js"
 );
 
 self.addEventListener('message', (event) => {
