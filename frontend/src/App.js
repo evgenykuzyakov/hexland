@@ -79,7 +79,7 @@ class App extends React.Component {
 
   async requestSignIn(e) {
     e && e.preventDefault();
-    const appTitle = 'Berry Cards';
+    const appTitle = '';
     await this._near.walletConnection.requestSignIn(
       NearConfig.contractName,
       appTitle
