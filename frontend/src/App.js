@@ -11,14 +11,14 @@ const TestNearConfig = {
   networkId: 'testnet',
   nodeUrl: 'https://rpc.testnet.near.org',
   archivalNodeUrl: 'https://rpc.mainnet.internal.near.org', // https://rpc.testnet.internal.near.org',
-  contractName: 'dev-1614796345972-8721304',
+  contractName: 'dev-1633114897352-65032726804099',
   walletUrl: 'https://wallet.testnet.near.org',
 };
 const MainNearConfig = {
   networkId: 'mainnet',
   nodeUrl: 'https://rpc.mainnet.near.org',
   archivalNodeUrl: 'https://rpc.mainnet.internal.near.org',
-  contractName: 'cards.berryclub.ek.near',
+  contractName: 'dev-1633114897352-65032726804099',
   walletUrl: 'https://wallet.near.org',
 };
 
@@ -35,6 +35,7 @@ class App extends React.Component {
 
     this.state = {
       connected: false,
+      draw: false,
       isNavCollapsed: true,
       account: null,
       requests: null,
@@ -71,8 +72,8 @@ class App extends React.Component {
     this._near.berryclub = new nearAPI.Account(this._near.archivalConnection, 'berryclub.ek.near');
 
     this._near.contract = new nearAPI.Contract(this._near.account, NearConfig.contractName, {
-      viewMethods: ['get_account', 'get_num_accounts', 'get_accounts', 'get_num_cards', 'get_top', 'get_rating', 'get_trade_data', 'get_card_info', 'get_account_cards'],
-      changeMethods: ['register_account', 'vote', 'buy_card'],
+      viewMethods: ['get_cells_json', 'get_storage_balance'],
+      changeMethods: ['draw_json'],
     });
 
   }
@@ -145,8 +146,10 @@ class App extends React.Component {
       <div>Connecting... <span className="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span></div>
     ) : (this.state.signedIn ? (
       <div>
+        <button onClick={() => this.setState({ draw: !this.state.draw})}>{!this.state.draw ? "Scroll mode" : "Draw mode"}</button>
+
         <button
-          className="btn btn-outline-secondary"
+          className="btn btn-outline-secondary" style={{float: "right"}}
           onClick={() => this.logOut()}>Sign out ({this.state.signedAccountId})</button>
       </div>
     ) : (
@@ -159,6 +162,7 @@ class App extends React.Component {
 
     return (
       <div className="App">
+        {header}
         <a className="github-fork-ribbon right-bottom fixed" href="https://github.com/evgenykuzyakov/hexland" data-ribbon="Fork me on GitHub"
            title="Fork me on GitHub">Fork me on GitHub</a>
 

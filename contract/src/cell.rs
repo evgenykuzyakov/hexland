@@ -61,7 +61,15 @@ impl From<Cell> for VCell {
 
 impl Cell {
     pub fn avg_color(&self) -> u32 {
-        self.colors.iter().sum::<u32>() / CELL_SIZE_2
+        let mut b = 0;
+        let mut g = 0;
+        let mut r = 0;
+        for &c in &self.colors {
+            b += c & 0xff;
+            g += (c & 0xff00) >> 8;
+            r += (c & 0xff0000) >> 16;
+        }
+        ((r >> 8) << 16) | ((g >> 8) << 8) | (b >> 8)
     }
 }
 
@@ -94,8 +102,10 @@ impl Contract {
             let mut cell = self.internal_unwrap_cell_or_default(&upper_cell_id);
             let off_x = cell_id.x - upper_cell_id.x * CELL_SIZE;
             let off_y = cell_id.y - upper_cell_id.y * CELL_SIZE;
+            let index = (off_y * CELL_SIZE + off_x) as usize;
+            let sub_nonce = ((cell.colors[index] >> 24) + 1) & 0xff;
             cell.nonce += 1;
-            cell.colors[(off_y * CELL_SIZE + off_x) as usize] = avg_color;
+            cell.colors[index] = (sub_nonce << 24) | avg_color;
             if level + 1 < NUM_LEVELS {
                 avg_color = cell.avg_color();
             }

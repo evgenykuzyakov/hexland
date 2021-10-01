@@ -1,10 +1,10 @@
-import "./Home.scss";
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import * as twgl from 'twgl-base.js';
 import vs from '../shaders/vs';
 import fs from '../shaders/fs';
+import {Board, StartOffsetX, StartOffsetY} from "../components/Board";
 
-let lastMousePos = null;
+
 const Sq3 = Math.sqrt(3.0) / 2;
 const DxA = Sq3 * 2;
 const DyA = 0;
@@ -16,57 +16,19 @@ const MinZoom = 1 / 64;
 
 const TexSize = 2048;
 
+let lastMousePos = null;
+let isDrawMode = false;
+let globalView = {
+  a: 0,
+  b: 0,
+  zoom: InitialZoom,
+  aspect: 1,
+};
+
+
 const state = {
   pos: [0, 0, 1],
 };
-
-const BoardHeight = 50;
-const BoardWidth = 50;
-const ExpectedLineLength = 4 + 8 * BoardWidth;
-
-const decodeLine = (line) => {
-  let buf = Buffer.from(line, 'base64');
-  if (buf.length !== ExpectedLineLength) {
-    throw new Error("Unexpected encoded line length");
-  }
-  let pixels = []
-  for (let i = 4; i < buf.length; i += 8) {
-    let color = buf.readUInt32LE(i);
-    // let ownerIndex = buf.readUInt32LE(i + 4);
-    pixels.push(color);
-  }
-  return pixels;
-};
-
-async function viewPixelBoard(berryclub, blockId) {
-  const args = {lines: [...Array(BoardHeight).keys()]};
-  const rawResult = await berryclub.connection.provider.query({
-    request_type: 'call_function',
-    block_id: blockId,
-    finality: blockId ? undefined : 'optimistic',
-    account_id: berryclub.accountId,
-    method_name: 'get_lines',
-    args_base64: Buffer.from(JSON.stringify(args), 'utf8').toString('base64'),
-  });
-  const result = rawResult.result && rawResult.result.length > 0 && JSON.parse(Buffer.from(rawResult.result).toString());
-  const lines = result.map(decodeLine);
-  const imageData = new Uint8ClampedArray(50 * 50 * 4);
-  let n = 0;
-  lines.forEach((line, i) => {
-    const width = line.length;
-    for (let i = 0; i < width; i++) {
-      const color = line[i];
-      imageData[n] = ((color >> 16) & 0xff);
-      imageData[n + 1] = ((color >> 8) & 0xff);
-      imageData[n + 2] = (color & 0xff);
-      imageData[n + 3] = 255;
-      n += 4;
-    }
-  });
-
-  return new ImageData(imageData, 50);
-}
-
 
 function setupRender(berryclub, gl) {
   const programInfo = twgl.createProgramInfo(gl, [vs, fs])
@@ -116,51 +78,16 @@ function setupRender(berryclub, gl) {
     fromCanvas: { src: canvas, mag: gl.NEAREST, min: gl.NEAREST, wrap: gl.CLAMP_TO_EDGE },
   });
 
-  const rnd = (w) => Math.floor(Math.random() * (TexSize - w));
-
-  const rendering = setInterval(() => {
-    viewPixelBoard(berryclub, 22000000 + Math.floor(Math.random() * 10000000))
-      .then((img) => {
-        for (let i = 0; i < 10; ++i) {
-          ctx.putImageData(img, rnd(50), rnd(50));
-        }
-        ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-        ctx.fillRect(0, 0, 1, 1);
-        twgl.setTextureFromElement(gl, textures.fromCanvas, canvas);
-      })
-      .catch((e) => {
-        console.log(e);
-      })
-  }, 100);
-
-  setTimeout(() => {
-    clearInterval(rendering);
-  }, 60 * 1000);
-
-  /*
-  const ww = 100;
-  const _bleeding = setInterval(() => {
-    const x = rnd(ww);
-    const y = rnd(ww);
-    const img = ctx.getImageData(x, y, ww, ww);
-    const d = img.data;
-    for (let i = 1; i < ww - 1; ++i) {
-      for (let j = 1; j < ww - 1; ++j) {
-        let outputOffset = (i * ww + j) * 4;
-        const x = j + Math.round(Math.random() * 2) - 1;
-        const y = i + Math.round(Math.random() * 2) - 1;
-        let inputOffset = (y * ww + x) * 4;
-        d[outputOffset] = d[inputOffset];
-        d[outputOffset + 1] = d[inputOffset + 1];
-        d[outputOffset + 2] = d[inputOffset + 2];
-        d[outputOffset + 3] = d[inputOffset + 3];
-      }
-    }
-    ctx.putImageData(img, x, y);
+  const board = new Board(berryclub, ctx, () => {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
     ctx.fillRect(0, 0, 1, 1);
     twgl.setTextureFromElement(gl, textures.fromCanvas, canvas);
-  }, 100);
-  */
+  });
+
+  board.refreshCells();
+  const rendering = setInterval(() => {
+    board.refreshCells();
+  }, 5000);
 
   function render(time) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
@@ -183,15 +110,18 @@ function setupRender(berryclub, gl) {
   requestAnimationFrame(render);
 }
 
+function dxdyToAb(dx, dy) {
+  const b = dy / DyB;
+  const a = (dx - b * DxB) / DxA;
+  return {
+    a, b,
+  }
+}
+
 function GlPage(props) {
   const canvasEl = useRef(null);
   const [ctx, setCtx] = useState(null);
-  const [view, setView] = useState({
-    a: 0,
-    b: 0,
-    zoom: InitialZoom,
-    aspect: 1,
-  });
+  const [view, setView] = useState(globalView);
   const [mouseAb, setMouseAb] = useState({a: 0, b: 0});
 
   const refresh = useCallback(() => {
@@ -261,10 +191,16 @@ function GlPage(props) {
     }
   }, [mouseAb, view, ctx, refresh])
 
-  const berryclub = props._near.berryclub;
+  const berryclub = props._near.contract;
+
+  const propsDraw = props.draw;
+  useEffect(() => {
+    isDrawMode = propsDraw;
+  }, [propsDraw]);
 
   useEffect(() => {
     if (canvasEl.current && berryclub) {
+      console.log("Setup");
       const ctx = canvasEl.current.getContext('webgl');
       setCtx(ctx);
 
@@ -273,22 +209,17 @@ function GlPage(props) {
         const x = e.clientX;
         const y = e.clientY;
         const rect = e.target.getBoundingClientRect();
-        const dx = ((e.clientX - rect.x) / rect.width - 0.5);
-        const dy = ((e.clientY - rect.y) / rect.width - rect.height / rect.width * 0.5);
-        const b = dy / DyB;
-        const a = (dx - b * DxB) / DxA;
-        setMouseAb({
-          a, b
-        })
-        if (lastMousePos) {
+        const dx = ((x - rect.x) / rect.width - 0.5);
+        const dy = ((y - rect.y) / rect.width - rect.height / rect.width * 0.5);
+        setMouseAb(dxdyToAb(dx, dy))
+        if (lastMousePos && !isDrawMode) {
           const dx = (x - lastMousePos.x) / rect.width;
           const dy = (y - lastMousePos.y) / rect.width;
-          const db = dy / DyB;
-          const da = (dx - db * DxB) / DxA;
+          const {a, b} = dxdyToAb(dx, dy);
           setView((view) => {
-            return {
-              a: view.a - da / view.zoom,
-              b: view.b - db / view.zoom,
+            return globalView = {
+              a: view.a - a / view.zoom,
+              b: view.b - b / view.zoom,
               zoom: view.zoom,
               aspect: view.aspect,
             }
@@ -298,6 +229,59 @@ function GlPage(props) {
           lastMousePos = {x, y};
         } else {
           lastMousePos = null;
+        }
+      });
+
+      const drawNow = async (ab) => {
+        const view = globalView;
+        let a = (view.a + ab.a / view.zoom + 0.5) * TexSize - 0.5;
+        let b = (view.b + ab.b / view.zoom + 0.5) * TexSize - 0.5;
+
+        function dist(na, nb) {
+          const cy = ((nb - b) * DyB + (na - a) * DyA);
+          const cx = ((nb - b) * DxB + (na - a) * DxA);
+          return cx * cx + cy * cy;
+        }
+
+        const ta = Math.trunc(a);
+        const tb = Math.trunc(b);
+        let best = null;
+        let minD = 10;
+
+        for (let i = -1; i < 2 ; ++i) {
+          for (let j = -1; j < 2; ++j) {
+            const a = ta + i;
+            const b = tb + j;
+            const d = dist(a, b);
+            if (d < minD + 1e-9) {
+              best = {a, b};
+              minD = d;
+            }
+          }
+        }
+        console.log(best);
+
+        const balance = (await berryclub.get_storage_balance({
+          account_id: berryclub.account.accountId
+        })) || "0";
+
+        await berryclub.draw_json({
+          pixels: [{
+            x: StartOffsetX + best.a,
+            y: StartOffsetY + best.b,
+            c: 0xffffff,
+          }]
+        }, "30000000000000", balance.length <= 24 ? "2000000000000000000000000" : "0");
+      }
+
+      canvasEl.current.addEventListener('mousedown', (e) => {
+        if ((e.buttons & 1) && isDrawMode) {
+          const x = e.clientX;
+          const y = e.clientY;
+          const rect = e.target.getBoundingClientRect();
+          const dx = ((x - rect.x) / rect.width - 0.5);
+          const dy = ((y - rect.y) / rect.width - rect.height / rect.width * 0.5);
+          drawNow(dxdyToAb(dx, dy));
         }
       });
 
@@ -315,7 +299,7 @@ function GlPage(props) {
           const va = oa - ma / newZoom;
           const vb = ob - mb / newZoom;
 
-          return {
+          return globalView = {
             a: va,
             b: vb,
             zoom: newZoom,
