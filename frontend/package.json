@@ -8,6 +8,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "bn.js": "^5.1.1",
+    "big.js": "^6.1.1",
     "bootstrap": "^5.0.0-beta2",
     "collections": "^5.1.12",
     "error-polyfill": "^0.1.2",
@@ -49,6 +50,7 @@
     ]
   },
   "devDependencies": {
-    "gh-pages": "^2.2.0"
+    "gh-pages": "^2.2.0",
+    "prettier": "^2.2.1"
   }
 }

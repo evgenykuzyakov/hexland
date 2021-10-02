@@ -1,3 +1,5 @@
+import Big from "big.js";
+
 const allCells = {};
 
 const Limit = 16;
@@ -15,15 +17,31 @@ const RootCellId = {
   y: StartOffsetY / Math.pow(CellSize, NumLevels + 1),
 };
 
+const MinBalance = Big(10).pow(23);
+const DrawGas = Big(100).mul(Big(10).pow(12)).toFixed(0);
+
 const intToColor = (c) => `#${(c & 0xffffff).toString(16).padStart(6, "0")}`;
 const s = (c) => JSON.stringify(c);
 const p = (c) => JSON.parse(c);
+const p2c = (p) => ({
+  x: Math.trunc(p.x / CellSize),
+  y: Math.trunc(p.y / CellSize),
+  level: 0,
+});
+
+const BatchOfPixels = 100;
+const BatchTimeout = 250;
 
 export class Board {
   constructor(contract, ctx, redraw) {
     this.contract = contract;
     this.ctx = ctx;
     this.redraw = redraw;
+    this.pixelQueue = [];
+    this.pendingPixels = [];
+    this.pending = {};
+    this.sendQueueTimer = null;
+    this.numFailedTxs = 0;
 
     this.needRedraw = false;
   }
@@ -91,16 +109,106 @@ export class Board {
     }
   }
 
+  async sendQueue() {
+    this.pixelQueue.sort((a, b) => s(p2c(a)).localeCompare(s(p2c(b))))
+    const pixels = this.pixelQueue.splice(0, BatchOfPixels);
+    this.pendingPixels = pixels;
+
+    const balance = Big(await this.contract.get_storage_balance({
+      account_id: this.contract.account.accountId
+    }) || "0");
+
+    try {
+      await this.contract.draw_json({
+        pixels
+      }, DrawGas, balance.lt(MinBalance) ? "1000000000000000000000000" : "0");
+      this.numFailedTxs = 0;
+    } catch (error) {
+      const msg = error.toString();
+      if (msg.indexOf("does not have enough balance") !== -1) {
+        await this.refreshAllowance();
+        return;
+      }
+      console.log("Failed to send a transaction", error);
+      this.numFailedTxs += 1;
+      if (this.numFailedTxs < 3) {
+        this.pixelQueue = this.pixelQueue.concat(this.pendingPixels);
+        this.pendingPixels = [];
+      } else {
+        this.pendingPixels = [];
+        this.pixelQueue = [];
+      }
+    }
+    // try {
+    //   await Promise.all([this.refreshBoard(true), this.refreshAccountStats()]);
+    // } catch (e) {
+    //   // ignore
+    // }
+    this.pendingPixels.forEach((p) => delete this.pending[s(p)]);
+    this.pendingPixels = [];
+  }
+
+  async pingQueue(ready) {
+    if (this.sendQueueTimer) {
+      clearTimeout(this.sendQueueTimer);
+      this.sendQueueTimer = null;
+    }
+
+    if (
+      this.pendingPixels.length === 0 &&
+      (this.pixelQueue.length >= BatchOfPixels || ready)
+    ) {
+      await this.sendQueue();
+    }
+    if (this.pixelQueue.length > 0) {
+      this.sendQueueTimer = setTimeout(async () => {
+        await this.pingQueue(true);
+      }, BatchTimeout);
+    }
+  }
+
+  modifyPixel(p) {
+    const cellId = p2c(p);
+    const cell = this.getCell(cellId);
+    const index = (p.y - cellId.y * CellSize) * CellSize + p.x - cellId.x * CellSize;
+    cell.colors[index] = p.c;
+
+    const x = p.x - StartOffsetX;
+    const y = p.y - StartOffsetY;
+    this.ctx.fillStyle = intToColor(p.c);
+    this.ctx.fillRect(x, y, 1, 1);
+    this.needRedraw = true;
+    setTimeout(() => {
+      this.internalRedraw();
+    }, 100)
+  }
+
+  draw(ab) {
+    const c = 0xffffff;
+    const p = {
+      x: StartOffsetX + ab.a,
+      y: StartOffsetY + ab.b,
+      c,
+    };
+    const sp = s(p);
+    if (!(sp in this.pending)) {
+      this.pending[sp] = true;
+      this.pixelQueue.push(p);
+
+      this.modifyPixel(p);
+    }
+
+    this.pingQueue(false);
+  }
+
   async refreshCells() {
     const q = [RootCellId];
     while (q.length > 0) {
       const cellIds = q.splice(0, Limit);
       const newCells = await this.fetchCells(cellIds);
-      // console.log(newCells);
       Object.entries(newCells).forEach(([cellId, cell]) => {
         if (cell) {
           cellId = p(cellId);
-          console.log(cellId, cell)
           if (cellId.level === 0) {
             this.internalRender(cellId, cell);
           } else {

@@ -1,8 +1,8 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef} from 'react';
 import * as twgl from 'twgl-base.js';
 import vs from '../shaders/vs';
 import fs from '../shaders/fs';
-import {Board, StartOffsetX, StartOffsetY} from "../components/Board";
+import {Board} from "../components/Board";
 
 
 const Sq3 = Math.sqrt(3.0) / 2;
@@ -18,17 +18,13 @@ const TexSize = 2048;
 
 let lastMousePos = null;
 let isDrawMode = false;
-let globalView = {
+let view = {
   a: 0,
   b: 0,
   zoom: InitialZoom,
   aspect: 1,
 };
 
-
-const state = {
-  pos: [0, 0, 1],
-};
 
 function setupRender(berryclub, gl) {
   const programInfo = twgl.createProgramInfo(gl, [vs, fs])
@@ -85,7 +81,7 @@ function setupRender(berryclub, gl) {
   });
 
   board.refreshCells();
-  const rendering = setInterval(() => {
+  setInterval(() => {
     board.refreshCells();
   }, 5000);
 
@@ -97,7 +93,7 @@ function setupRender(berryclub, gl) {
     const uniforms = {
       resolution: [gl.canvas.width, gl.canvas.height],
       texSize: [TexSize - 1, TexSize - 1],
-      pos: state.pos,
+      pos: [view.a, view.b, view.zoom],
       u_diffuse: textures.fromCanvas,
     };
     gl.useProgram(programInfo.program);
@@ -108,6 +104,8 @@ function setupRender(berryclub, gl) {
     requestAnimationFrame(render);
   }
   requestAnimationFrame(render);
+
+  return board;
 }
 
 function dxdyToAb(dx, dy) {
@@ -120,77 +118,6 @@ function dxdyToAb(dx, dy) {
 
 function GlPage(props) {
   const canvasEl = useRef(null);
-  const [ctx, setCtx] = useState(null);
-  const [view, setView] = useState(globalView);
-  const [mouseAb, setMouseAb] = useState({a: 0, b: 0});
-
-  const refresh = useCallback(() => {
-    let width = 1;
-    let height = view.aspect;
-    const zoom = view.zoom;
-    let maxA = width / zoom / DxA;
-    let maxB = height / zoom / DyB;
-
-    const db = height / zoom / DyB / 2;
-    const da = (width / zoom / 2 - db * DxB) / DxA;
-
-    const oa = view.a - da;
-    const ob = view.b - db;
-
-    Object.assign(state, {
-      pos: [view.a, view.b, zoom]
-    })
-    /*
-    if (mouseAb) {
-      let a = view.a + mouseAb.a / zoom;
-      let b = view.b + mouseAb.b / zoom;
-
-      function dist(na, nb) {
-        const cy = ((nb - b) * DyB + (na - a) * DyA);
-        const cx = ((nb - b) * DxB + (na - a) * DxA);
-        return cx * cx + cy * cy;
-      }
-
-      const ta = Math.trunc(a);
-      const tb = Math.trunc(b);
-      let best = null;
-      let minD = 10;
-
-      for (let i = -1; i < 2 ; ++i) {
-        for (let j = -1; j < 2; ++j) {
-          const a = ta + i;
-          const b = tb + j;
-          const d = dist(a, b);
-          if (d < minD + 1e-9) {
-            best = {a, b};
-            minD = d;
-          }
-        }
-      }
-
-      a = best.a;
-      b = best.b;
-
-      const cy = ((b - ob) * DyB + (a - oa) * DyA) * zoom;
-      const cx = ((b - ob) * DxB + (a - oa) * DxA) * zoom;
-      drawHex(
-        ctx,
-        cx,
-        cy,
-        zoom,
-        'rgba(0, 0, 0, 0.25)'
-      );
-    }
-   */
-
-  }, [ctx, view, mouseAb])
-
-  useEffect(() => {
-    if (ctx) {
-      refresh();
-    }
-  }, [mouseAb, view, ctx, refresh])
-
   const berryclub = props._near.contract;
 
   const propsDraw = props.draw;
@@ -202,38 +129,8 @@ function GlPage(props) {
     if (canvasEl.current && berryclub) {
       console.log("Setup");
       const ctx = canvasEl.current.getContext('webgl');
-      setCtx(ctx);
-
-      setupRender(berryclub, ctx);
-      canvasEl.current.addEventListener('mousemove', (e) => {
-        const x = e.clientX;
-        const y = e.clientY;
-        const rect = e.target.getBoundingClientRect();
-        const dx = ((x - rect.x) / rect.width - 0.5);
-        const dy = ((y - rect.y) / rect.width - rect.height / rect.width * 0.5);
-        setMouseAb(dxdyToAb(dx, dy))
-        if (lastMousePos && !isDrawMode) {
-          const dx = (x - lastMousePos.x) / rect.width;
-          const dy = (y - lastMousePos.y) / rect.width;
-          const {a, b} = dxdyToAb(dx, dy);
-          setView((view) => {
-            return globalView = {
-              a: view.a - a / view.zoom,
-              b: view.b - b / view.zoom,
-              zoom: view.zoom,
-              aspect: view.aspect,
-            }
-          })
-        }
-        if (e.buttons & 1) {
-          lastMousePos = {x, y};
-        } else {
-          lastMousePos = null;
-        }
-      });
 
       const drawNow = async (ab) => {
-        const view = globalView;
         let a = (view.a + ab.a / view.zoom + 0.5) * TexSize - 0.5;
         let b = (view.b + ab.b / view.zoom + 0.5) * TexSize - 0.5;
 
@@ -259,20 +156,37 @@ function GlPage(props) {
             }
           }
         }
-        console.log(best);
-
-        const balance = (await berryclub.get_storage_balance({
-          account_id: berryclub.account.accountId
-        })) || "0";
-
-        await berryclub.draw_json({
-          pixels: [{
-            x: StartOffsetX + best.a,
-            y: StartOffsetY + best.b,
-            c: 0xffffff,
-          }]
-        }, "30000000000000", balance.length <= 24 ? "2000000000000000000000000" : "0");
+        board.draw(best);
       }
+
+      const board = setupRender(berryclub, ctx);
+      canvasEl.current.addEventListener('mousemove', (e) => {
+        const x = e.clientX;
+        const y = e.clientY;
+        const rect = e.target.getBoundingClientRect();
+        const dx = ((x - rect.x) / rect.width - 0.5);
+        const dy = ((y - rect.y) / rect.width - rect.height / rect.width * 0.5);
+        const ab = dxdyToAb(dx, dy);
+        if ((e.buttons & 1) && isDrawMode) {
+          drawNow(ab);
+        } else if (lastMousePos && !isDrawMode) {
+          const dx = (x - lastMousePos.x) / rect.width;
+          const dy = (y - lastMousePos.y) / rect.width;
+          const {a, b} = dxdyToAb(dx, dy);
+          view = {
+            a: view.a - a / view.zoom,
+            b: view.b - b / view.zoom,
+            zoom: view.zoom,
+            aspect: view.aspect,
+          };
+        }
+        if (e.buttons & 1) {
+          lastMousePos = {x, y};
+        } else {
+          lastMousePos = null;
+        }
+      });
+
 
       canvasEl.current.addEventListener('mousedown', (e) => {
         if ((e.buttons & 1) && isDrawMode) {
@@ -292,20 +206,20 @@ function GlPage(props) {
         const dy = ((e.clientY - rect.y) / rect.width - rect.height / rect.width * 0.5);
         const mb = dy / DyB;
         const ma = (dx - mb * DxB) / DxA;
-        setView((view) => {
-          const newZoom = Math.max(MinZoom, view.zoom * Math.exp(-e.deltaY * 0.001));
-          const oa = view.a + ma / view.zoom;
-          const ob = view.b + mb / view.zoom;
-          const va = oa - ma / newZoom;
-          const vb = ob - mb / newZoom;
 
-          return globalView = {
-            a: va,
-            b: vb,
-            zoom: newZoom,
-            aspect: view.aspect,
-          }
-        })
+        const newZoom = Math.max(MinZoom, view.zoom * Math.exp(-e.deltaY * 0.001));
+        const oa = view.a + ma / view.zoom;
+        const ob = view.b + mb / view.zoom;
+        const va = oa - ma / newZoom;
+        const vb = ob - mb / newZoom;
+
+        view = {
+          a: va,
+          b: vb,
+          zoom: newZoom,
+          aspect: view.aspect,
+        };
+
       });
 
       const resize = () => {
@@ -324,7 +238,7 @@ function GlPage(props) {
         canvasEl.current.width = width * pixelRatio;
         canvasEl.current.height = height * pixelRatio;
         // ctx.scale(canvasEl.current.width, canvasEl.current.width);
-        setView((v) => Object.assign({}, v, {aspect: height / width}));
+        view = Object.assign({}, view, {aspect: height / width})
       };
 
       window.addEventListener('resize', resize);
