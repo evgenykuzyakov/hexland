@@ -1,22 +1,25 @@
 {
   "files": {
     "main.css": "/hexland/static/css/main.7744d0c4.chunk.css",
-    "main.js": "/hexland/static/js/main.194ac4ad.chunk.js",
-    "main.js.map": "/hexland/static/js/main.194ac4ad.chunk.js.map",
+    "main.js": "/hexland/static/js/main.3cea22e5.chunk.js",
+    "main.js.map": "/hexland/static/js/main.3cea22e5.chunk.js.map",
     "runtime-main.js": "/hexland/static/js/runtime-main.02ccb323.js",
     "runtime-main.js.map": "/hexland/static/js/runtime-main.02ccb323.js.map",
-    "static/js/2.8e6612db.chunk.js": "/hexland/static/js/2.8e6612db.chunk.js",
-    "static/js/2.8e6612db.chunk.js.map": "/hexland/static/js/2.8e6612db.chunk.js.map",
+    "static/css/2.73e032e2.chunk.css": "/hexland/static/css/2.73e032e2.chunk.css",
+    "static/js/2.38dde415.chunk.js": "/hexland/static/js/2.38dde415.chunk.js",
+    "static/js/2.38dde415.chunk.js.map": "/hexland/static/js/2.38dde415.chunk.js.map",
     "index.html": "/hexland/index.html",
-    "precache-manifest.c959c1010516d11a32f6fdb280893bd4.js": "/hexland/precache-manifest.c959c1010516d11a32f6fdb280893bd4.js",
+    "precache-manifest.bbe39bedbb247cc6bcb5701b1cad7ceb.js": "/hexland/precache-manifest.bbe39bedbb247cc6bcb5701b1cad7ceb.js",
     "service-worker.js": "/hexland/service-worker.js",
+    "static/css/2.73e032e2.chunk.css.map": "/hexland/static/css/2.73e032e2.chunk.css.map",
     "static/css/main.7744d0c4.chunk.css.map": "/hexland/static/css/main.7744d0c4.chunk.css.map",
-    "static/js/2.8e6612db.chunk.js.LICENSE.txt": "/hexland/static/js/2.8e6612db.chunk.js.LICENSE.txt"
+    "static/js/2.38dde415.chunk.js.LICENSE.txt": "/hexland/static/js/2.38dde415.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.02ccb323.js",
-    "static/js/2.8e6612db.chunk.js",
+    "static/css/2.73e032e2.chunk.css",
+    "static/js/2.38dde415.chunk.js",
     "static/css/main.7744d0c4.chunk.css",
-    "static/js/main.194ac4ad.chunk.js"
+    "static/js/main.3cea22e5.chunk.js"
   ]
 }
