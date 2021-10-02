@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import * as twgl from 'twgl-base.js';
 import vs from '../shaders/vs';
 import fs from '../shaders/fs';
@@ -119,12 +119,17 @@ function dxdyToAb(dx, dy) {
 function GlPage(props) {
   const canvasEl = useRef(null);
   const berryclub = props._near.contract;
+  const [board, setBoard] = useState(null);
+
   if (berryclub) {
     berryclub.setState = props.setState;
     berryclub.refreshAllowance = props.refreshAllowance
+    if (board) {
+      board.state = props.state;
+    }
   }
 
-  const propsDraw = props.draw;
+  const propsDraw = props.state.draw;
   useEffect(() => {
     isDrawMode = propsDraw;
   }, [propsDraw]);
@@ -164,6 +169,7 @@ function GlPage(props) {
       }
 
       const board = setupRender(berryclub, ctx);
+      setBoard(board);
       canvasEl.current.addEventListener('mousemove', (e) => {
         const x = e.clientX;
         const y = e.clientY;

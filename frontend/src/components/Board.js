@@ -1,4 +1,6 @@
 import Big from "big.js";
+import {NearConfig} from "../App";
+import ls from "local-storage";
 
 const allCells = {};
 
@@ -22,6 +24,7 @@ const DrawGas = Big(100).mul(Big(10).pow(12)).toFixed(0);
 const UnclaimedDefaultColor = 0x333333;
 
 const intToColor = (c) => `#${(c & 0xffffff).toString(16).padStart(6, "0")}`;
+const colorToInt = (c) => parseInt(c.substring(1), 16);
 const s = (c) => JSON.stringify(c);
 const p = (c) => JSON.parse(c);
 const p2c = (p) => ({
@@ -33,11 +36,15 @@ const p2c = (p) => ({
 const BatchOfPixels = 100;
 const BatchTimeout = 250;
 
+const cellKey = (cellIdStr) => `${NearConfig.contractName}:v01:-cell-${cellIdStr}`;
+
 export class Board {
   constructor(contract, ctx, redraw) {
     this.contract = contract;
     this.setState = contract.setState;
     this.refreshAllowance = contract.refreshAllowance;
+    this.state = contract.state;
+
     this.ctx = ctx;
     this.redraw = redraw;
     this.pixelQueue = [];
@@ -47,6 +54,8 @@ export class Board {
     this.numFailedTxs = 0;
 
     this.needRedraw = false;
+
+    this.renderLocal();
   }
 
   async fetchCells(cellIds) {
@@ -62,7 +71,7 @@ export class Board {
     if (cellIdStr in allCells) {
       return allCells[cellIdStr]
     } else {
-      return {
+      return allCells[cellIdStr] = ls.get(cellKey(cellIdStr)) || {
         nonce: 0,
         colors: new Array(CellSize2).fill(0),
       }
@@ -70,7 +79,9 @@ export class Board {
   }
 
   setCell(cellId, cell) {
-    allCells[s(cellId)] = cell;
+    const cellIdStr = s(cellId);
+    allCells[cellIdStr] = cell;
+    ls.set(cellKey(cellIdStr), cell)
   }
 
   internalPaint(cellId, color) {
@@ -110,6 +121,35 @@ export class Board {
       this.needRedraw = false;
       this.redraw();
     }
+  }
+
+  renderLocal() {
+    const q = [RootCellId];
+    while (q.length > 0) {
+      const cellId = q.splice(0, 1)[0];
+      const cell = this.getCell(cellId);
+      if (cell.nonce > 0) {
+        if (cellId.level === 0) {
+          this.internalRender(cellId, cell);
+        } else {
+          for (let i = 0; i < CellSize; ++i) {
+            for (let j = 0; j < CellSize; ++j) {
+              const index = i * CellSize + j;
+              const newCellId = {
+                level: cellId.level - 1,
+                x: cellId.x * CellSize + j,
+                y: cellId.y * CellSize + i,
+              };
+              this.internalPaint(newCellId, cell.colors[index]);
+              if (cell.colors[index]) {
+                q.push(newCellId);
+              }
+            }
+          }
+        }
+      }
+    }
+    this.internalRedraw();
   }
 
   async refreshAccountBalance() {
@@ -195,7 +235,7 @@ export class Board {
   }
 
   draw(ab) {
-    const c = 0xffffff;
+    const c = colorToInt(this.state.color);
     const p = {
       x: StartOffsetX + ab.a,
       y: StartOffsetY + ab.b,

@@ -1,5 +1,7 @@
 import React from 'react';
 import "error-polyfill";
+import 'bootstrap/dist/js/bootstrap.bundle';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.scss";
 import './gh-fork-ribbon.css';
 import * as nearAPI from 'near-api-js'
@@ -23,16 +25,13 @@ const MainNearConfig = {
   walletUrl: 'https://wallet.near.org',
 };
 
-const NearConfig = IsMainnet ? MainNearConfig : TestNearConfig;
+export const NearConfig = IsMainnet ? MainNearConfig : TestNearConfig;
 
-class App extends React.Component {
+export class App extends React.Component {
   constructor(props) {
     super(props);
 
     this._near = {};
-
-    this._near.lsKey = NearConfig.contractName + ':v01:';
-    this._near.lsKeyRecentCards = this._near.lsKey + "recentCards";
 
     this.state = {
       connected: false,
@@ -40,8 +39,7 @@ class App extends React.Component {
       isNavCollapsed: true,
       account: null,
       accountBalance: Big(0),
-      requests: null,
-      recentCards: ls.get(this._near.lsKeyRecentCards) || [],
+      color: `#${Math.trunc(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`
     };
 
     this._initNear().then(() => {
@@ -148,20 +146,29 @@ class App extends React.Component {
       _near: this._near,
       setState: (s, c) => this.setState(s, c),
       refreshAllowance: () => this.refreshAllowance(),
-      ...this.state
+      state: this.state
     };
     const header = !this.state.connected ? (
       <div>Connecting... <span className="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span></div>
     ) : (this.state.signedIn ? (
       <div>
-        <button onClick={() => this.setState({ draw: !this.state.draw})}>{!this.state.draw ? "Scroll mode" : "Draw mode"}</button>
+        <button className="btn btn-primary me-2" onClick={() => this.setState({ draw: !this.state.draw})}>{!this.state.draw ? "Scroll mode" : "Draw mode"}</button>
+        {this.state.draw && <>
+          Color:
+          <div className="d-inline-block align-middle">
+            <input className="form-control ms-2 p-0" type="color" id="color" name="color" style={{minWidth: "5em"}}
+                   value={this.state.color} onChange={(e) => this.setState({
+              color: e.target.value
+            })} />
+          </div>
+        </>}
 
         <div style={{float: "right"}}>
           <label>
             Account Balance: {this.state.accountBalance.div(Big(10).pow(24)).toFixed(3)} NEAR
           </label>
           <button
-            className="btn btn-outline-secondary"
+            className="btn btn-outline-secondary ms-2"
             onClick={() => this.logOut()}>Sign out ({this.state.signedAccountId})</button>
         </div>
       </div>
@@ -184,5 +191,3 @@ class App extends React.Component {
     )
   }
 }
-
-export default App;
