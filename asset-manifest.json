@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/hexland/static/css/main.7744d0c4.chunk.css",
-    "main.js": "/hexland/static/js/main.97aea1aa.chunk.js",
-    "main.js.map": "/hexland/static/js/main.97aea1aa.chunk.js.map",
+    "main.js": "/hexland/static/js/main.bdf7da02.chunk.js",
+    "main.js.map": "/hexland/static/js/main.bdf7da02.chunk.js.map",
     "runtime-main.js": "/hexland/static/js/runtime-main.02ccb323.js",
     "runtime-main.js.map": "/hexland/static/js/runtime-main.02ccb323.js.map",
-    "static/js/2.f71cecfa.chunk.js": "/hexland/static/js/2.f71cecfa.chunk.js",
-    "static/js/2.f71cecfa.chunk.js.map": "/hexland/static/js/2.f71cecfa.chunk.js.map",
+    "static/js/2.6ae2843f.chunk.js": "/hexland/static/js/2.6ae2843f.chunk.js",
+    "static/js/2.6ae2843f.chunk.js.map": "/hexland/static/js/2.6ae2843f.chunk.js.map",
     "index.html": "/hexland/index.html",
-    "precache-manifest.af49a972db1fbad691070f8c020ad54f.js": "/hexland/precache-manifest.af49a972db1fbad691070f8c020ad54f.js",
+    "precache-manifest.87753c15fa4e96501f5a1ac032dd428e.js": "/hexland/precache-manifest.87753c15fa4e96501f5a1ac032dd428e.js",
     "service-worker.js": "/hexland/service-worker.js",
     "static/css/main.7744d0c4.chunk.css.map": "/hexland/static/css/main.7744d0c4.chunk.css.map",
-    "static/js/2.f71cecfa.chunk.js.LICENSE.txt": "/hexland/static/js/2.f71cecfa.chunk.js.LICENSE.txt"
+    "static/js/2.6ae2843f.chunk.js.LICENSE.txt": "/hexland/static/js/2.6ae2843f.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.02ccb323.js",
-    "static/js/2.f71cecfa.chunk.js",
+    "static/js/2.6ae2843f.chunk.js",
     "static/css/main.7744d0c4.chunk.css",
-    "static/js/main.97aea1aa.chunk.js"
+    "static/js/main.bdf7da02.chunk.js"
   ]
 }
