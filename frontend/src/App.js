@@ -5,6 +5,7 @@ import './gh-fork-ribbon.css';
 import * as nearAPI from 'near-api-js'
 import ls from "local-storage";
 import GlPage from "./pages/GL";
+import Big from "big.js";
 
 const IsMainnet = false; // window.location.hostname === "berry.cards";
 const TestNearConfig = {
@@ -38,6 +39,7 @@ class App extends React.Component {
       draw: false,
       isNavCollapsed: true,
       account: null,
+      accountBalance: Big(0),
       requests: null,
       recentCards: ls.get(this._near.lsKeyRecentCards) || [],
     };
@@ -55,11 +57,11 @@ class App extends React.Component {
   async _initNear() {
     const keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore();
     const near = await nearAPI.connect(Object.assign({deps: {keyStore}}, NearConfig));
-    this._near.archivalConnection = nearAPI.Connection.fromConfig({
-      networkId: NearConfig.networkId,
-      provider: { type: 'JsonRpcProvider', args: { url: NearConfig.archivalNodeUrl } },
-      signer: { type: 'InMemorySigner', keyStore }
-    });
+    // this._near.archivalConnection = nearAPI.Connection.fromConfig({
+    //   networkId: NearConfig.networkId,
+    //   provider: { type: 'JsonRpcProvider', args: { url: NearConfig.archivalNodeUrl } },
+    //   signer: { type: 'InMemorySigner', keyStore }
+    // });
     this._near.keyStore = keyStore;
     this._near.near = near;
 
@@ -69,12 +71,21 @@ class App extends React.Component {
     this._near.account = this._near.walletConnection.account();
 
 
-    this._near.berryclub = new nearAPI.Account(this._near.archivalConnection, 'berryclub.ek.near');
-
+    // this._near.berryclub = new nearAPI.Account(this._near.archivalConnection, 'berryclub.ek.near');
+    //
     this._near.contract = new nearAPI.Contract(this._near.account, NearConfig.contractName, {
       viewMethods: ['get_cells_json', 'get_storage_balance'],
       changeMethods: ['draw_json'],
     });
+
+    if (this._near.accountId) {
+      const balance = Big(await this._near.contract.get_storage_balance({
+        account_id: this._near.accountId
+      }) || "0");
+      this.setState({
+        accountBalance: balance,
+      })
+    }
 
   }
 
@@ -135,10 +146,7 @@ class App extends React.Component {
   render() {
     const passProps = {
       _near: this._near,
-      updateState: (s, c) => this.setState(s, c),
-      popRequest: (c) => this.popRequest(c),
-      addRequest: (r, c) => this.addRequest(r, c),
-      addRecentCard: (cardId) => this.addRecentCard(cardId),
+      setState: (s, c) => this.setState(s, c),
       refreshAllowance: () => this.refreshAllowance(),
       ...this.state
     };
@@ -148,9 +156,14 @@ class App extends React.Component {
       <div>
         <button onClick={() => this.setState({ draw: !this.state.draw})}>{!this.state.draw ? "Scroll mode" : "Draw mode"}</button>
 
-        <button
-          className="btn btn-outline-secondary" style={{float: "right"}}
-          onClick={() => this.logOut()}>Sign out ({this.state.signedAccountId})</button>
+        <div style={{float: "right"}}>
+          <label>
+            Account Balance: {this.state.accountBalance.div(Big(10).pow(24)).toFixed(3)} NEAR
+          </label>
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => this.logOut()}>Sign out ({this.state.signedAccountId})</button>
+        </div>
       </div>
     ) : (
       <div>

@@ -119,6 +119,10 @@ function dxdyToAb(dx, dy) {
 function GlPage(props) {
   const canvasEl = useRef(null);
   const berryclub = props._near.contract;
+  if (berryclub) {
+    berryclub.setState = props.setState;
+    berryclub.refreshAllowance = props.refreshAllowance
+  }
 
   const propsDraw = props.draw;
   useEffect(() => {

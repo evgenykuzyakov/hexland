@@ -19,6 +19,7 @@ const RootCellId = {
 
 const MinBalance = Big(10).pow(23);
 const DrawGas = Big(100).mul(Big(10).pow(12)).toFixed(0);
+const UnclaimedDefaultColor = 0x333333;
 
 const intToColor = (c) => `#${(c & 0xffffff).toString(16).padStart(6, "0")}`;
 const s = (c) => JSON.stringify(c);
@@ -35,6 +36,8 @@ const BatchTimeout = 250;
 export class Board {
   constructor(contract, ctx, redraw) {
     this.contract = contract;
+    this.setState = contract.setState;
+    this.refreshAllowance = contract.refreshAllowance;
     this.ctx = ctx;
     this.redraw = redraw;
     this.pixelQueue = [];
@@ -75,7 +78,7 @@ export class Board {
       const w = Math.pow(CellSize, cellId.level + 1);
       const x = cellId.x * w - StartOffsetX;
       const y = cellId.y * w - StartOffsetY;
-      this.ctx.fillStyle = intToColor(color);
+      this.ctx.fillStyle = intToColor(color || UnclaimedDefaultColor);
       this.ctx.fillRect(x, y, w, w);
       this.needRedraw = true;
     }
@@ -109,14 +112,22 @@ export class Board {
     }
   }
 
+  async refreshAccountBalance() {
+    const balance = Big(await this.contract.get_storage_balance({
+      account_id: this.contract.account.accountId
+    }) || "0");
+    this.setState({
+      accountBalance: balance,
+    });
+    return balance;
+  }
+
   async sendQueue() {
     this.pixelQueue.sort((a, b) => s(p2c(a)).localeCompare(s(p2c(b))))
     const pixels = this.pixelQueue.splice(0, BatchOfPixels);
     this.pendingPixels = pixels;
 
-    const balance = Big(await this.contract.get_storage_balance({
-      account_id: this.contract.account.accountId
-    }) || "0");
+    const balance = await this.refreshAccountBalance();
 
     try {
       await this.contract.draw_json({
@@ -139,11 +150,11 @@ export class Board {
         this.pixelQueue = [];
       }
     }
-    // try {
-    //   await Promise.all([this.refreshBoard(true), this.refreshAccountStats()]);
-    // } catch (e) {
-    //   // ignore
-    // }
+    try {
+      await this.refreshAccountBalance();
+    } catch (e) {
+      // ignore
+    }
     this.pendingPixels.forEach((p) => delete this.pending[s(p)]);
     this.pendingPixels = [];
   }
@@ -217,13 +228,13 @@ export class Board {
               for (let i = 0; i < CellSize; ++i) {
                 for (let j = 0; j < CellSize; ++j) {
                   const index = i * CellSize + j;
+                  const newCellId = {
+                    level: cellId.level - 1,
+                    x: cellId.x * CellSize + j,
+                    y: cellId.y * CellSize + i,
+                  };
+                  this.internalPaint(newCellId, cell.colors[index]);
                   if (cell.colors[index] !== oldCell.colors[index]) {
-                    const newCellId = {
-                      level: cellId.level - 1,
-                      x: cellId.x * CellSize + j,
-                      y: cellId.y * CellSize + i,
-                    };
-                    this.internalPaint(newCellId, cell.colors[index]);
                     q.push(newCellId);
                   }
                 }
