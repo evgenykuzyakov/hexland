@@ -1,27 +1,27 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "b705466a0989be6f423ad8b1a32be8f2",
+    "revision": "fe0b39b6e0e2fbd0167162291466600f",
     "url": "/hexland/index.html"
   },
   {
-    "revision": "35022e0bc5264f3ca163",
+    "revision": "8389f10aa89f5f23ed0b",
     "url": "/hexland/static/css/2.73e032e2.chunk.css"
   },
   {
-    "revision": "fade63e9f77ef1cd639a",
+    "revision": "ab58f91def014d2ae411",
     "url": "/hexland/static/css/main.7744d0c4.chunk.css"
   },
   {
-    "revision": "35022e0bc5264f3ca163",
-    "url": "/hexland/static/js/2.38dde415.chunk.js"
+    "revision": "8389f10aa89f5f23ed0b",
+    "url": "/hexland/static/js/2.33aea0b3.chunk.js"
   },
   {
     "revision": "921cb1c971a2b4c5b6ed70ae98a4cfc6",
-    "url": "/hexland/static/js/2.38dde415.chunk.js.LICENSE.txt"
+    "url": "/hexland/static/js/2.33aea0b3.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "fade63e9f77ef1cd639a",
-    "url": "/hexland/static/js/main.3cea22e5.chunk.js"
+    "revision": "ab58f91def014d2ae411",
+    "url": "/hexland/static/js/main.ccf7bb9c.chunk.js"
   },
   {
     "revision": "1efd37f59f8c06d8f324",
