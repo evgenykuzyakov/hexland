@@ -12,7 +12,8 @@ const DxB = Sq3;
 const DyB = 1.5;
 
 const InitialZoom = 1;
-const MinZoom = 1 / 64;
+const MinZoom = 1 / 4;
+const MaxZoom = 16;
 
 const TexSize = 2048;
 
@@ -108,6 +109,15 @@ function setupRender(berryclub, gl) {
   return board;
 }
 
+function mouseToAb(e) {
+  const x = e.clientX;
+  const y = e.clientY;
+  const rect = e.target.getBoundingClientRect();
+  const dx = ((x - rect.x) / rect.width - 0.5);
+  const dy = ((y - rect.y) / rect.width - rect.height / rect.width * 0.5);
+  return dxdyToAb(dx, dy);
+}
+
 function dxdyToAb(dx, dy) {
   const b = dy / DyB;
   const a = (dx - b * DxB) / DxA;
@@ -139,7 +149,7 @@ function GlPage(props) {
       console.log("Setup");
       const ctx = canvasEl.current.getContext('webgl');
 
-      const drawNow = async (ab) => {
+      const drawNow = (ab) => {
         let a = (view.a + ab.a / view.zoom + 0.5) * TexSize - 0.5;
         let b = (view.b + ab.b / view.zoom + 0.5) * TexSize - 0.5;
 
@@ -171,27 +181,21 @@ function GlPage(props) {
       const board = setupRender(berryclub, ctx);
       setBoard(board);
       canvasEl.current.addEventListener('mousemove', (e) => {
-        const x = e.clientX;
-        const y = e.clientY;
-        const rect = e.target.getBoundingClientRect();
-        const dx = ((x - rect.x) / rect.width - 0.5);
-        const dy = ((y - rect.y) / rect.width - rect.height / rect.width * 0.5);
-        const ab = dxdyToAb(dx, dy);
+        const ab = mouseToAb(e);
         if ((e.buttons & 1) && isDrawMode) {
           drawNow(ab);
         } else if (lastMousePos && !isDrawMode) {
-          const dx = (x - lastMousePos.x) / rect.width;
-          const dy = (y - lastMousePos.y) / rect.width;
-          const {a, b} = dxdyToAb(dx, dy);
+          const da = ab.a - lastMousePos.a;
+          const db = ab.b - lastMousePos.b;
           view = {
-            a: view.a - a / view.zoom,
-            b: view.b - b / view.zoom,
+            a: view.a - da / view.zoom,
+            b: view.b - db / view.zoom,
             zoom: view.zoom,
             aspect: view.aspect,
           };
         }
         if (e.buttons & 1) {
-          lastMousePos = {x, y};
+          lastMousePos = ab;
         } else {
           lastMousePos = null;
         }
@@ -200,28 +204,20 @@ function GlPage(props) {
 
       canvasEl.current.addEventListener('mousedown', (e) => {
         if ((e.buttons & 1) && isDrawMode) {
-          const x = e.clientX;
-          const y = e.clientY;
-          const rect = e.target.getBoundingClientRect();
-          const dx = ((x - rect.x) / rect.width - 0.5);
-          const dy = ((y - rect.y) / rect.width - rect.height / rect.width * 0.5);
-          drawNow(dxdyToAb(dx, dy));
+          const ab = mouseToAb(e);
+          drawNow(ab);
         }
       });
 
       canvasEl.current.addEventListener('wheel', (e) => {
         e.preventDefault();
-        const rect = e.target.getBoundingClientRect();
-        const dx = ((e.clientX - rect.x) / rect.width - 0.5);
-        const dy = ((e.clientY - rect.y) / rect.width - rect.height / rect.width * 0.5);
-        const mb = dy / DyB;
-        const ma = (dx - mb * DxB) / DxA;
+        const ab = mouseToAb(e);
 
-        const newZoom = Math.max(MinZoom, view.zoom * Math.exp(-e.deltaY * 0.001));
-        const oa = view.a + ma / view.zoom;
-        const ob = view.b + mb / view.zoom;
-        const va = oa - ma / newZoom;
-        const vb = ob - mb / newZoom;
+        const newZoom = Math.min(MaxZoom, Math.max(MinZoom, view.zoom * Math.exp(-e.deltaY * 0.001)));
+        const oa = view.a + ab.a / view.zoom;
+        const ob = view.b + ab.b / view.zoom;
+        const va = oa - ab.a / newZoom;
+        const vb = ob - ab.b / newZoom;
 
         view = {
           a: va,
